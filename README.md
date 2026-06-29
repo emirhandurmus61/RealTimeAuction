@@ -49,12 +49,39 @@ E-posta: seller@auction.local
 Parola:  Seller123!
 ```
 
+### REST API (Swagger)
+
+```bash
+dotnet run --project AuctionHouse.Api
+# Swagger UI: http://localhost:<port>/swagger
+```
+
+Başlıca endpoint'ler:
+
+| Method | Route | Açıklama | Yetki |
+|--------|-------|----------|-------|
+| GET  | `/api/auctions`           | Açık artırma listesi      | herkes |
+| GET  | `/api/auctions/{id}`      | Detay + teklif geçmişi    | herkes |
+| POST | `/api/auctions`           | Yeni açık artırma         | Seller/Admin |
+| POST | `/api/auctions/{id}/bids` | Teklif ver                | giriş yapmış |
+| POST | `/register`, `/login`     | Identity (bearer token)   | herkes |
+
+Teklif iş kuralları: teklif `güncel fiyat + min artış` değerinden düşük olamaz,
+açık artırma aktif/süresi geçmemiş olmalı, satıcı kendi artırmasına teklif veremez.
+Eşzamanlı teklifler `RowVersion` (optimistic concurrency) + sınırlı retry ile çözülür.
+
+### Testler
+
+```bash
+dotnet test
+```
+
 ## Proje Durumu
 
 🚧 Geliştirme aşamasında. Yol haritası için bkz. `realtime-auction-roadmap.md`.
 
 - [x] **Hafta 0** — Solution + 6 proje iskeleti, referans grafiği
 - [x] **Hafta 1** — Domain + EF Core + Identity (açık artırma listesi/detay DB'den, kayıt/giriş)
-- [ ] **Hafta 2** — Web API + teklif mantığı + concurrency
+- [x] **Hafta 2** — Web API (REST + Swagger + bearer auth), teklif iş kuralları, optimistic concurrency + retry, xUnit testleri
 - [ ] **Hafta 3** — SignalR (canlı teklif/sayaç/presence)
 - [ ] **Hafta 4** — Background jobs + testler + deploy

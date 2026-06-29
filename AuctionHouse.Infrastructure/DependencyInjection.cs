@@ -1,4 +1,6 @@
+using AuctionHouse.Core.Interfaces;
 using AuctionHouse.Infrastructure.Data;
+using AuctionHouse.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +22,9 @@ public static class DependencyInjection
 
         services.AddDbContext<AuctionDbContext>(options =>
             options.UseSqlite(connectionString));
+
+        services.AddScoped<IAuctionService, AuctionService>();
+        services.AddScoped<IBidService, BidService>();
 
         return services;
     }
