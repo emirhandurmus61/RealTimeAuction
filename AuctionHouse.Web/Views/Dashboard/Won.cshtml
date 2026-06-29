@@ -1,0 +1,11 @@
+@model IEnumerable<AuctionHouse.Core.DTOs.AuctionSummaryDto>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Kazandıklarım 🏆</h1>
+    <div class="btn-group">
+        <a asp-action="Index" class="btn btn-outline-primary">Tekliflerim</a>
+        <a asp-action="Won" class="btn btn-primary">Kazandıklarım</a>
+    </div>
+</div>
+
+<partial name="_AuctionTable" model="Model" />

@@ -1,0 +1,48 @@
+@model IEnumerable<AuctionHouse.Core.DTOs.AuctionSummaryDto>
+@{
+    static (string text, string css) StatusBadge(AuctionHouse.Core.Entities.AuctionStatus s) => s switch
+    {
+        AuctionHouse.Core.Entities.AuctionStatus.Active => ("Aktif", "bg-success"),
+        AuctionHouse.Core.Entities.AuctionStatus.Scheduled => ("Planlandı", "bg-secondary"),
+        AuctionHouse.Core.Entities.AuctionStatus.Ended => ("Bitti", "bg-dark"),
+        AuctionHouse.Core.Entities.AuctionStatus.Cancelled => ("İptal", "bg-danger"),
+        _ => ("?", "bg-secondary")
+    };
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Kayıt yok.</div>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Başlık</th>
+                <th>Kategori</th>
+                <th class="text-end">Güncel Fiyat</th>
+                <th>Bitiş</th>
+                <th>Durum</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                var badge = StatusBadge(a.Status);
+                <tr>
+                    <td>@a.Title</td>
+                    <td>@(a.CategoryName ?? "—")</td>
+                    <td class="text-end fw-bold">@a.CurrentPrice.ToString("N2") ₺</td>
+                    <td>@a.EndTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    <td><span class="badge @badge.css">@badge.text</span></td>
+                    <td>
+                        <a asp-controller="Auctions" asp-action="Details" asp-route-id="@a.Id"
+                           class="btn btn-sm btn-outline-primary">Görüntüle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

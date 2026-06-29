@@ -66,4 +66,28 @@ public class AuctionService : IAuctionService
         await _db.SaveChangesAsync(ct);
         return auction.Id;
     }
+
+    public async Task<IReadOnlyList<AuctionSummaryDto>> GetBidByUserAsync(string userId, CancellationToken ct = default)
+    {
+        return await _db.Auctions
+            .AsNoTracking()
+            .Where(a => a.Bids.Any(b => b.BidderId == userId))
+            .OrderByDescending(a => a.Bids.Where(b => b.BidderId == userId).Max(b => b.Timestamp))
+            .Select(a => new AuctionSummaryDto(
+                a.Id, a.Title, a.Category != null ? a.Category.Name : null,
+                a.CurrentPrice, a.MinIncrement, a.EndTime, a.Status))
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<AuctionSummaryDto>> GetWonByUserAsync(string userId, CancellationToken ct = default)
+    {
+        return await _db.Auctions
+            .AsNoTracking()
+            .Where(a => a.Status == AuctionStatus.Ended && a.WinnerId == userId)
+            .OrderByDescending(a => a.EndTime)
+            .Select(a => new AuctionSummaryDto(
+                a.Id, a.Title, a.Category != null ? a.Category.Name : null,
+                a.CurrentPrice, a.MinIncrement, a.EndTime, a.Status))
+            .ToListAsync(ct);
+    }
 }

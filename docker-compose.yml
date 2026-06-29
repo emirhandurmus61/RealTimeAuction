@@ -1,0 +1,19 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: realtimeauction-web
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # SQLite veritabanını kalıcı bir volume'da tut.
+      - ConnectionStrings__DefaultConnection=DataSource=/data/app.db;Cache=Shared
+    volumes:
+      - auction-data:/data
+      - auction-logs:/app/logs
+
+volumes:
+  auction-data:
+  auction-logs:

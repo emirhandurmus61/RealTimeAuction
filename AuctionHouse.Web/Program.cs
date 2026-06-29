@@ -3,8 +3,16 @@ using AuctionHouse.Hubs;
 using AuctionHouse.Infrastructure;
 using AuctionHouse.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog — yapılandırmadan oku, konsola ve dosyaya yaz.
+builder.Host.UseSerilog((context, config) => config
+    .ReadFrom.Configuration(context.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/auction-.log", rollingInterval: RollingInterval.Day));
 
 // EF Core (SQLite) — Infrastructure katmanından.
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -34,6 +42,9 @@ else
     app.UseHsts();
 }
 
+// HTTP isteklerini Serilog ile özet logla.
+app.UseSerilogRequestLogging();
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
@@ -50,7 +61,19 @@ app.MapRazorPages();
 // SignalR hub endpoint'i.
 app.MapHub<AuctionHub>("/hubs/auction");
 
-// Veritabanını migrate et + seed (roller, örnek satıcı, açık artırmalar).
-await DbSeeder.SeedAsync(app.Services);
+try
+{
+    // Veritabanını migrate et + seed (roller, örnek satıcı, açık artırmalar).
+    await DbSeeder.SeedAsync(app.Services);
 
-app.Run();
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Uygulama beklenmedik şekilde sonlandı.");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}

@@ -25,6 +25,10 @@ public static class DependencyInjection
 
         services.AddScoped<IAuctionService, AuctionService>();
         services.AddScoped<IBidService, BidService>();
+        services.AddScoped<IAuctionCloser, AuctionCloser>();
+
+        // Süresi dolan açık artırmaları otomatik kapatan arka plan servisi.
+        services.AddHostedService<AuctionClosingService>();
 
         return services;
     }
