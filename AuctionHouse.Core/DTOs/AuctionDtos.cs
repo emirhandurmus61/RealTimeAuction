@@ -44,7 +44,8 @@ public record CreateAuctionRequest(
     decimal MinIncrement,
     DateTime StartTime,
     DateTime EndTime,
-    int? CategoryId);
+    int? CategoryId,
+    IReadOnlyList<string>? ImageUrls = null);
 
 /// <summary>Teklif verme isteği.</summary>
 public record PlaceBidRequest(decimal Amount);

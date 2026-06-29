@@ -1,10 +1,22 @@
 @model AuctionHouse.Core.Entities.Auction
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Antiforgery
 @inject IAntiforgery Antiforgery
 @{
     ViewData["Title"] = Model.Title;
     var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
     var isActive = Model.Status == AuctionHouse.Core.Entities.AuctionStatus.Active;
+    var isEnded = Model.Status == AuctionHouse.Core.Entities.AuctionStatus.Ended;
+
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var isSeller = currentUserId is not null && currentUserId == Model.SellerId;
+    var isWinner = currentUserId is not null && currentUserId == Model.WinnerId;
+    var hasWinner = !string.IsNullOrEmpty(Model.WinnerId);
+}
+
+@if (TempData["Created"] is string createdMsg)
+{
+    <div class="alert alert-info">@createdMsg</div>
 }
 
 <nav aria-label="breadcrumb">
@@ -14,42 +26,70 @@
     </ol>
 </nav>
 
-<div class="row">
+<div class="row g-4">
     <div class="col-lg-7">
-        <h1>@Model.Title</h1>
+        @{
+            var images = Model.Images.OrderBy(i => i.SortOrder).ToList();
+        }
+        @if (images.Any())
+        {
+            <div class="gallery">
+                <div class="gallery-main">
+                    <img id="galleryMain" src="@images[0].Url" alt="@Model.Title" />
+                </div>
+                @if (images.Count > 1)
+                {
+                    <div class="gallery-thumbs">
+                        @for (var i = 0; i < images.Count; i++)
+                        {
+                            <button type="button" class="gallery-thumb @(i == 0 ? "active" : "")"
+                                    data-src="@images[i].Url" aria-label="Görsel @(i + 1)">
+                                <img src="@images[i].Url" alt="" loading="lazy" />
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <h1 class="mb-2">@Model.Title</h1>
         @if (Model.Category is not null)
         {
             <span class="badge bg-light text-dark mb-3">@Model.Category.Name</span>
         }
         <p class="lead">@Model.Description</p>
 
-        <dl class="row mt-4">
-            <dt class="col-sm-4">Açılış Fiyatı</dt>
-            <dd class="col-sm-8">@Model.StartPrice.ToString("N2") ₺</dd>
+        <div class="card mt-4">
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Açılış Fiyatı</dt>
+                    <dd class="col-sm-8" style="font-family: var(--ff-mono);">@Model.StartPrice.ToString("N2") ₺</dd>
 
-            <dt class="col-sm-4">Min. Artış</dt>
-            <dd class="col-sm-8">@Model.MinIncrement.ToString("N2") ₺</dd>
+                    <dt class="col-sm-4">Min. Artış</dt>
+                    <dd class="col-sm-8" style="font-family: var(--ff-mono);">@Model.MinIncrement.ToString("N2") ₺</dd>
 
-            <dt class="col-sm-4">Satıcı</dt>
-            <dd class="col-sm-8">@(Model.Seller?.DisplayName ?? Model.Seller?.Email ?? "—")</dd>
+                    <dt class="col-sm-4">Satıcı</dt>
+                    <dd class="col-sm-8">@(Model.Seller?.DisplayName ?? Model.Seller?.Email ?? "—")</dd>
 
-            <dt class="col-sm-4">Bitiş</dt>
-            <dd class="col-sm-8">@Model.EndTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
-        </dl>
+                    <dt class="col-sm-4">Bitiş</dt>
+                    <dd class="col-sm-8">@Model.EndTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
     </div>
 
     <div class="col-lg-5">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="badge bg-info text-dark">
-                        👁 <span id="viewerCount">0</span> izliyor
+        <div class="bid-panel">
+            <div class="card-body text-center position-relative" style="z-index:1;">
+                <div class="d-flex justify-content-between mb-4">
+                    <span class="badge bg-info">
+                        <span id="viewerCount">0</span> izleyici
                     </span>
                     <span id="countdown" class="badge bg-warning text-dark">--:--</span>
                 </div>
 
-                <div class="text-muted">Güncel Teklif</div>
-                <div id="currentPrice" class="display-5 fw-bold text-primary mb-3"
+                <div class="price-label mb-1">Güncel Teklif</div>
+                <div id="currentPrice" class="display-5 fw-bold mb-4"
                      data-value="@Model.CurrentPrice">
                     @Model.CurrentPrice.ToString("N2") ₺
                 </div>
@@ -59,7 +99,7 @@
                     <div id="bidArea">
                         <div class="input-group mb-2">
                             <input type="number" step="0.01" id="bidAmount" class="form-control"
-                                   placeholder="Teklif tutarı" />
+                                   placeholder="Teklif tutarı (₺)" />
                             <button id="bidButton" class="btn btn-primary">Teklif Ver</button>
                         </div>
                         <div id="bidFeedback" class="small"></div>
@@ -69,26 +109,95 @@
                 {
                     <a asp-area="Identity" asp-page="/Account/Login"
                        asp-route-returnUrl="@Url.Action("Details", new { id = Model.Id })"
-                       class="btn btn-outline-primary w-100">Teklif vermek için giriş yap</a>
+                       class="btn btn-primary w-100">Teklif vermek için giriş yap</a>
                 }
             </div>
         </div>
 
-        <h5 class="mt-4">Teklif Geçmişi (<span id="bidCount">@Model.Bids.Count</span>)</h5>
+        @* --- Kazananla / satıcıyla iletişim: yalnızca ilan bittiğinde ve ilgili taraflara --- *@
+        @if (isEnded && hasWinner && (isSeller || isWinner))
+        {
+            <div class="contact-card">
+                @if (isSeller)
+                {
+                    <div class="contact-head"><span class="badge bg-success">Satış tamamlandı</span></div>
+                    <p class="text-muted small mb-3">Bu lotu kazanan alıcının iletişim bilgileri aşağıdadır. Teslimat ve ödeme için iletişime geçebilirsiniz.</p>
+                    <div class="contact-row">
+                        <span class="k">Kazanan</span>
+                        <span class="v">@(Model.Winner?.DisplayName ?? "—")</span>
+                    </div>
+                    <div class="contact-row">
+                        <span class="k">E-posta</span>
+                        <span class="v"><a href="mailto:@Model.Winner?.Email">@Model.Winner?.Email</a></span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Winner?.PhoneNumber))
+                    {
+                        <div class="contact-row">
+                            <span class="k">Telefon</span>
+                            <span class="v"><a href="tel:@Model.Winner?.PhoneNumber">@Model.Winner?.PhoneNumber</a></span>
+                        </div>
+                    }
+                    <div class="contact-row">
+                        <span class="k">Satış bedeli</span>
+                        <span class="v" style="font-family: var(--ff-mono);">@Model.CurrentPrice.ToString("N2") ₺</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="contact-head"><span class="badge bg-warning text-dark">Tebrikler, kazandınız</span></div>
+                    <p class="text-muted small mb-3">Bu lotu kazandınız. Teslimat ve ödeme için satıcıyla iletişime geçin.</p>
+                    <div class="contact-row">
+                        <span class="k">Satıcı</span>
+                        <span class="v">@(Model.Seller?.DisplayName ?? "—")</span>
+                    </div>
+                    <div class="contact-row">
+                        <span class="k">E-posta</span>
+                        <span class="v"><a href="mailto:@Model.Seller?.Email">@Model.Seller?.Email</a></span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Seller?.PhoneNumber))
+                    {
+                        <div class="contact-row">
+                            <span class="k">Telefon</span>
+                            <span class="v"><a href="tel:@Model.Seller?.PhoneNumber">@Model.Seller?.PhoneNumber</a></span>
+                        </div>
+                    }
+                    <div class="contact-row">
+                        <span class="k">Ödenecek tutar</span>
+                        <span class="v" style="font-family: var(--ff-mono);">@Model.CurrentPrice.ToString("N2") ₺</span>
+                    </div>
+                }
+            </div>
+        }
+
+        <h5 class="section-title mt-4 mb-3">Teklif Geçmişi · <span id="bidCount">@Model.Bids.Count</span></h5>
         <ul id="bidList" class="list-group">
             @foreach (var bid in Model.Bids)
             {
                 <li class="list-group-item d-flex justify-content-between">
                     <span>@(bid.Bidder?.DisplayName ?? bid.Bidder?.Email ?? "Anonim")</span>
-                    <strong>@bid.Amount.ToString("N2") ₺</strong>
+                    <strong style="font-family: var(--ff-mono);">@bid.Amount.ToString("N2") ₺</strong>
                 </li>
             }
         </ul>
-        <p id="noBids" class="text-muted @(Model.Bids.Any() ? "d-none" : "")">Henüz teklif yok.</p>
+        <p id="noBids" class="text-muted small mt-2 @(Model.Bids.Any() ? "d-none" : "")">Henüz teklif yok — ilk teklifi sen ver.</p>
     </div>
 </div>
 
 @section Scripts {
+    <script>
+        // --- Galeri: thumbnail tıklayınca ana görseli değiştir ---
+        (function () {
+            const main = document.getElementById("galleryMain");
+            if (!main) return;
+            document.querySelectorAll(".gallery-thumb").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    main.src = btn.dataset.src;
+                    document.querySelectorAll(".gallery-thumb").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                });
+            });
+        })();
+    </script>
     <script src="~/lib/signalr/signalr.min.js"></script>
     <script>
         const auctionId = @Model.Id;
@@ -156,7 +265,7 @@
             const list = document.getElementById("bidList");
             const li = document.createElement("li");
             li.className = "list-group-item d-flex justify-content-between list-group-item-success";
-            li.innerHTML = `<span>${e.bidderName ?? "Anonim"}</span><strong>${fmt(e.newPrice)}</strong>`;
+            li.innerHTML = `<span>${e.bidderName ?? "Anonim"}</span><strong style="font-family: var(--ff-mono);">${fmt(e.newPrice)}</strong>`;
             list.prepend(li);
             document.getElementById("noBids").classList.add("d-none");
             const cnt = document.getElementById("bidCount");

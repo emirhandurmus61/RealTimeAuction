@@ -2,18 +2,116 @@
     ViewData["Title"] = "Ana Sayfa";
 }
 
-<div class="px-4 py-5 my-3 text-center">
-    <h1 class="display-4 fw-bold">🔨 RealTimeAuction</h1>
-    <div class="col-lg-7 mx-auto">
-        <p class="lead mb-4">
-            Gerçek zamanlı, çok kullanıcılı açık artırma platformu.
-            Bir teklif verildiği anda fiyat, geri sayım ve izleyici sayısı
-            herkesin ekranında anlık güncellenir.
-        </p>
-        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-            <a asp-controller="Auctions" asp-action="Index" class="btn btn-primary btn-lg px-4 gap-3">
-                Açık Artırmalara Göz At
+<section class="hero">
+    <span class="hero-eyebrow"><span class="live-dot"></span> Canlı müzayede · gerçek zamanlı</span>
+    <h1>
+        Çekiç düşene kadar<br />
+        <span class="grad-text">her saniye masada.</span>
+    </h1>
+    <p class="lead">
+        Çok kullanıcılı bir müzayede salonu. Bir teklif verildiği an fiyat, geri sayım ve
+        odadaki izleyici sayısı herkesin ekranında aynı anda değişir — sayfa yenilemeden,
+        gecikmesiz.
+    </p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a asp-controller="Auctions" asp-action="Index" class="btn btn-primary btn-lg">
+            Salona Gir
+        </a>
+        @if (User.Identity?.IsAuthenticated != true)
+        {
+            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-primary btn-lg">
+                Hesap Aç &amp; İlan Ver
             </a>
+        }
+        else
+        {
+            <a asp-controller="Auctions" asp-action="Create" class="btn btn-outline-primary btn-lg">
+                Açık Artırma Başlat
+            </a>
+        }
+    </div>
+
+    <div class="stat-strip">
+        <div>
+            <div class="stat-num">100 ms</div>
+            <div class="stat-label">altı teklif yayını</div>
+        </div>
+        <div>
+            <div class="stat-num">canlı</div>
+            <div class="stat-label">izleyici sayacı</div>
+        </div>
+        <div>
+            <div class="stat-num">otomatik</div>
+            <div class="stat-label">süre uzatma</div>
         </div>
     </div>
-</div>
+</section>
+
+<section class="mechanics mt-5 pt-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <span class="section-eyebrow">Salonun işleyişi</span>
+        <span class="section-eyebrow">Lot 01 — 04</span>
+    </div>
+
+    <div class="mech-row">
+        <div class="mech-no">01</div>
+        <div class="mech-body">
+            <div class="mech-title">Teklif anında herkese ulaşır</div>
+            <p class="mech-desc">
+                Verdiğin teklif, kalıcı bir bağlantı üzerinden odadaki tüm katılımcılara
+                milisaniyeler içinde iletilir. Fiyat, geri sayım ve teklif geçmişi sayfa
+                yenilenmeden güncellenir.
+            </p>
+        </div>
+    </div>
+
+    <div class="mech-row">
+        <div class="mech-no">02</div>
+        <div class="mech-body">
+            <div class="mech-title">Odanın nabzını gör</div>
+            <p class="mech-desc">
+                Bir lota kaç kişinin baktığını gerçek zamanlı izle. Rekabetin ne zaman
+                ısındığını görür, hamleni ona göre yaparsın.
+            </p>
+        </div>
+    </div>
+
+    <div class="mech-row">
+        <div class="mech-no">03</div>
+        <div class="mech-body">
+            <div class="mech-title">Son saniye oyunu bozmaz</div>
+            <p class="mech-desc">
+                Bitişe saniyeler kala gelen teklifler süreyi otomatik uzatır. Kimse zamanı
+                kötüye kullanıp kapanışı çalamaz; çekiç gerçekten düşene kadar herkesin sırası gelir.
+            </p>
+        </div>
+    </div>
+
+    <div class="mech-row">
+        <div class="mech-no">04</div>
+        <div class="mech-body">
+            <div class="mech-title">Sonuç şeffaf ve kalıcı</div>
+            <p class="mech-desc">
+                Süre dolunca en yüksek teklif kazanır ve kayda geçer. Verdiğin teklifleri ve
+                kazandığın lotları kendi panelinden tek ekranda takip edersin.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="closing-band">
+    <span class="section-eyebrow d-block mb-3">Satıcıysan</span>
+    <h2 class="grad-text">Kendi lotunu masaya koy.</h2>
+    <p class="lead mx-auto mb-4" style="max-width: 540px;">
+        Başlık, açılış fiyatı ve süreyi belirle; ilanın yayınlandığı an canlı odan açılır,
+        teklifler akmaya başlar.
+    </p>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-controller="Auctions" asp-action="Create" class="btn btn-primary btn-lg">Açık Artırma Başlat</a>
+    }
+    else
+    {
+        <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary btn-lg">Hesap Aç</a>
+    }
+</section>

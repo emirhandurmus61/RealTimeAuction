@@ -51,4 +51,7 @@ public class Auction
     public ApplicationUser? Winner { get; set; }
 
     public ICollection<Bid> Bids { get; set; } = new List<Bid>();
+
+    /// <summary>İlana ait ürün görselleri (galeri).</summary>
+    public ICollection<AuctionImage> Images { get; set; } = new List<AuctionImage>();
 }

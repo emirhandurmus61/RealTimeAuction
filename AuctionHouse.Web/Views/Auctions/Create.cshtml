@@ -1,0 +1,122 @@
+@model AuctionHouse.Web.Models.CreateAuctionViewModel
+@{
+    ViewData["Title"] = "Açık Artırma Başlat";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Açık Artırmalar</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Yeni</li>
+    </ol>
+</nav>
+
+<div class="page-head">
+    <h1 class="mb-1">Açık Artırma Başlat</h1>
+    <p class="text-muted mb-0">İlan bilgilerini gir; yayınlandığı an canlı odan açılır.</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" placeholder="Örn. Vintage mekanik kol saati" autocomplete="off" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="4"
+                                  placeholder="Ürünün durumu, kökeni, dikkat çeken detaylar..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+                            <option value="">Kategori seçin (opsiyonel)</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="StartPrice" class="form-label"></label>
+                            <input asp-for="StartPrice" class="form-control" type="number" step="0.01" min="0.01" />
+                            <span asp-validation-for="StartPrice" class="text-danger small"></span>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="MinIncrement" class="form-label"></label>
+                            <input asp-for="MinIncrement" class="form-control" type="number" step="0.01" min="0.01" />
+                            <span asp-validation-for="MinIncrement" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="StartTime" class="form-label"></label>
+                            <input asp-for="StartTime" class="form-control" type="datetime-local" />
+                            <span asp-validation-for="StartTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-sm-6 mb-4">
+                            <label asp-for="EndTime" class="form-label"></label>
+                            <input asp-for="EndTime" class="form-control" type="datetime-local" />
+                            <span asp-validation-for="EndTime" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Images" class="form-label"></label>
+                        <input asp-for="Images" type="file" id="imageInput" class="form-control"
+                               accept="image/png,image/jpeg,image/webp,image/gif" multiple />
+                        <div class="form-text text-muted">En fazla 8 görsel · her biri 5 MB'a kadar · JPG, PNG, WEBP, GIF. İlk görsel kapak olur.</div>
+                        <span asp-validation-for="Images" class="text-danger small"></span>
+                        <div id="imagePreview" class="d-flex flex-wrap gap-2 mt-3"></div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">İlanı Yayınla</button>
+                        <a asp-action="Index" class="btn btn-link">Vazgeç</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="section-title mb-3">Nasıl çalışır?</h2>
+                <ul class="text-muted small mb-0" style="padding-left: 1.1rem; line-height: 1.9;">
+                    <li>Başlangıç zamanı geçmişse ilan anında <strong>canlı</strong> olur, ileride ise <strong>planlanır</strong>.</li>
+                    <li>Açılış fiyatı ilk teklif tabanıdır; her teklif minimum artış kadar yükselmelidir.</li>
+                    <li>Bitişe yakın gelen teklifler süreyi otomatik uzatır (anti-sniping).</li>
+                    <li>Süre dolunca en yüksek teklifi veren kazanan olarak işaretlenir.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const input = document.getElementById("imageInput");
+        const preview = document.getElementById("imagePreview");
+        input?.addEventListener("change", () => {
+            preview.innerHTML = "";
+            [...input.files].slice(0, 8).forEach((file, i) => {
+                if (!file.type.startsWith("image/")) return;
+                const url = URL.createObjectURL(file);
+                const wrap = document.createElement("div");
+                wrap.className = "img-thumb" + (i === 0 ? " is-cover" : "");
+                wrap.innerHTML = `<img src="${url}" alt="">${i === 0 ? '<span class="cover-tag">Kapak</span>' : ''}`;
+                preview.appendChild(wrap);
+            });
+        });
+    </script>
+}

@@ -18,6 +18,7 @@ public class AuctionDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Auction> Auctions => Set<Auction>();
     public DbSet<Bid> Bids => Set<Bid>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<AuctionImage> AuctionImages => Set<AuctionImage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

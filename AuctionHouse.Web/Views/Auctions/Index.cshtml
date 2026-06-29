@@ -2,21 +2,27 @@
 @{
     ViewData["Title"] = "Açık Artırmalar";
 
-    static (string text, string css) StatusBadge(AuctionHouse.Core.Entities.AuctionStatus s) => s switch
+    static (string text, string css, bool live) StatusBadge(AuctionHouse.Core.Entities.AuctionStatus s) => s switch
     {
-        AuctionHouse.Core.Entities.AuctionStatus.Active => ("Aktif", "bg-success"),
-        AuctionHouse.Core.Entities.AuctionStatus.Scheduled => ("Planlandı", "bg-secondary"),
-        AuctionHouse.Core.Entities.AuctionStatus.Ended => ("Bitti", "bg-dark"),
-        AuctionHouse.Core.Entities.AuctionStatus.Cancelled => ("İptal", "bg-danger"),
-        _ => ("?", "bg-secondary")
+        AuctionHouse.Core.Entities.AuctionStatus.Active => ("Canlı", "bg-success", true),
+        AuctionHouse.Core.Entities.AuctionStatus.Scheduled => ("Planlandı", "bg-secondary", false),
+        AuctionHouse.Core.Entities.AuctionStatus.Ended => ("Bitti", "bg-dark", false),
+        AuctionHouse.Core.Entities.AuctionStatus.Cancelled => ("İptal", "bg-danger", false),
+        _ => ("?", "bg-secondary", false)
     };
 }
 
-<h1 class="mb-4">Açık Artırmalar</h1>
+<div class="page-head d-flex flex-wrap justify-content-between align-items-end gap-2">
+    <div>
+        <h1 class="mb-1">Açık Artırmalar</h1>
+        <p class="text-muted mb-0">Aktif odaları keşfet, teklifini ver, çekiç düşene kadar takipte kal.</p>
+    </div>
+    <span class="badge bg-info">@Model.Count() ilan</span>
+</div>
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">Henüz açık artırma yok.</div>
+    <div class="alert alert-info">Henüz açık artırma yok. Yakında yeni ilanlar burada listelenecek.</div>
 }
 else
 {
@@ -25,27 +31,50 @@ else
         {
             var badge = StatusBadge(a.Status);
             <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="card auction-card h-100">
+                    @{
+                        var cover = a.Images.OrderBy(i => i.SortOrder).FirstOrDefault();
+                    }
+                    @if (cover is not null)
+                    {
+                        <div class="auction-cover">
+                            <img src="@cover.Url" alt="@a.Title" loading="lazy" />
+                            @if (a.Images.Count > 1)
+                            {
+                                <span class="cover-count">@a.Images.Count fotoğraf</span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="auction-cover is-placeholder">Görsel yok</div>
+                    }
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
                             <h5 class="card-title mb-0">@a.Title</h5>
-                            <span class="badge @badge.css">@badge.text</span>
+                            <span class="badge @badge.css flex-shrink-0">
+                                @if (badge.live) { <span class="live-dot"></span> }@badge.text
+                            </span>
                         </div>
                         @if (a.Category is not null)
                         {
-                            <span class="badge bg-light text-dark mb-2">@a.Category.Name</span>
+                            <div class="mb-2"><span class="badge bg-light text-dark">@a.Category.Name</span></div>
                         }
-                        <p class="card-text text-muted small">@a.Description</p>
-                        <div class="fs-5 fw-bold text-primary">
-                            @a.CurrentPrice.ToString("N2") ₺
+                        <p class="card-text small flex-grow-1">@a.Description</p>
+
+                        <div class="mt-3">
+                            <div class="price-label">Güncel teklif</div>
+                            <div class="fs-4 fw-bold text-primary" style="font-family: var(--ff-mono);">
+                                @a.CurrentPrice.ToString("N2") ₺
+                            </div>
                         </div>
-                        <div class="small text-muted">
+                        <div class="small text-muted mt-1">
                             Bitiş: @a.EndTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
                         </div>
                     </div>
-                    <div class="card-footer bg-transparent border-0">
+                    <div class="card-footer">
                         <a asp-action="Details" asp-route-id="@a.Id" class="btn btn-outline-primary btn-sm w-100">
-                            Detay & Teklif
+                            Detay &amp; Teklif Ver
                         </a>
                     </div>
                 </div>

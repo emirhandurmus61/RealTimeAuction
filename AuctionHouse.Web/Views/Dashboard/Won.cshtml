@@ -1,10 +1,13 @@
 @model IEnumerable<AuctionHouse.Core.DTOs.AuctionSummaryDto>
+@{
+    ViewData["Title"] = "Kazandıklarım";
+}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">Kazandıklarım 🏆</h1>
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <h1 class="mb-0">Kazandıklarım</h1>
     <div class="btn-group">
-        <a asp-action="Index" class="btn btn-outline-primary">Tekliflerim</a>
-        <a asp-action="Won" class="btn btn-primary">Kazandıklarım</a>
+        <a asp-action="Index" class="btn btn-outline-primary btn-sm">Tekliflerim</a>
+        <a asp-action="Won" class="btn btn-primary btn-sm">Kazandıklarım</a>
     </div>
 </div>
 

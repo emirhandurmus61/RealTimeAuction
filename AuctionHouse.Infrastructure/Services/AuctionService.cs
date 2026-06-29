@@ -62,6 +62,15 @@ public class AuctionService : IAuctionService
             RowVersion = Guid.NewGuid().ToByteArray()
         };
 
+        if (request.ImageUrls is { Count: > 0 })
+        {
+            var order = 0;
+            foreach (var url in request.ImageUrls)
+            {
+                auction.Images.Add(new AuctionImage { Url = url, SortOrder = order++ });
+            }
+        }
+
         _db.Auctions.Add(auction);
         await _db.SaveChangesAsync(ct);
         return auction.Id;

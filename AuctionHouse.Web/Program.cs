@@ -2,6 +2,8 @@ using AuctionHouse.Core.Entities;
 using AuctionHouse.Hubs;
 using AuctionHouse.Infrastructure;
 using AuctionHouse.Infrastructure.Data;
+using AuctionHouse.Web.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
 
@@ -25,6 +27,10 @@ builder.Services
     .AddEntityFrameworkStores<AuctionDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+// Giriş yapan her kullanıcıyı otomatik olarak Seller rolüne ekler
+// (yeni kayıtların açık artırma açabilmesi için).
+builder.Services.AddScoped<IClaimsTransformation, AutoSellerClaimsTransformation>();
 
 // SignalR + presence tracker + IAuctionNotifier (canlı yayın).
 builder.Services.AddAuctionRealtime();

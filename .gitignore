@@ -6,6 +6,10 @@
 # dotenv files
 .env
 
+# Kullanıcı tarafından yüklenen ilan görselleri (içerik repoya girmez, klasör korunur)
+AuctionHouse.Web/wwwroot/uploads/*
+!AuctionHouse.Web/wwwroot/uploads/.gitkeep
+
 # User-specific files
 *.rsuser
 *.suo

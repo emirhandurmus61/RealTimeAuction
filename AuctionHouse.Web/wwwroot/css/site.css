@@ -1,22 +1,729 @@
+/* ============================================================
+   RealTimeAuction — Design System
+   "Midnight Saleroom": koyu lacivert zemin, amber/altın vurgu,
+   cam-morfizm kartlar ve canlı müzayede atmosferi.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+
+:root {
+    /* Zemin katmanları */
+    --bg-900: #0a0e1a;
+    --bg-800: #0f1424;
+    --bg-700: #161d33;
+    --surface: rgba(255, 255, 255, 0.035);
+    --surface-strong: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.16);
+
+    /* Vurgu — amber/altın (çekiç teması) */
+    --amber-300: #ffd479;
+    --amber-400: #ffc24d;
+    --amber-500: #f5a623;
+    --amber-600: #e08a0c;
+    --amber-glow: rgba(245, 166, 35, 0.35);
+
+    /* İkincil — elektrik moru/indigo (canlılık) */
+    --violet-400: #8b7cff;
+    --violet-500: #6c5ce7;
+
+    /* Anlamsal renkler */
+    --live: #2bd97c;
+    --live-glow: rgba(43, 217, 124, 0.4);
+    --danger: #ff5d6c;
+    --info: #4cc5ff;
+
+    /* Metin */
+    --text: #eef1f8;
+    --text-muted: #9aa3bd;
+    --text-dim: #6b7390;
+
+    --radius: 16px;
+    --radius-sm: 11px;
+    --radius-lg: 24px;
+
+    --shadow-soft: 0 18px 50px -20px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 0 1px var(--border), 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+
+    --ff-display: 'Sora', system-ui, sans-serif;
+    --ff-body: 'Inter', system-ui, sans-serif;
+    --ff-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ---------- Reset / temel ---------- */
 html {
-  font-size: 14px;
+    font-size: 15px;
+    scroll-behavior: smooth;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html { font-size: 16px; }
 }
 
 body {
-  margin-bottom: 60px;
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--ff-body);
+    color: var(--text);
+    background-color: var(--bg-900);
+    background-image:
+        radial-gradient(1100px 600px at 12% -8%, rgba(108, 92, 231, 0.18), transparent 60%),
+        radial-gradient(900px 600px at 92% 0%, rgba(245, 166, 35, 0.14), transparent 55%),
+        radial-gradient(700px 700px at 50% 120%, rgba(43, 217, 124, 0.07), transparent 60%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
+
+h1, h2, h3, h4, h5, .display-4, .display-5 {
+    font-family: var(--ff-display);
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+a { color: var(--amber-400); text-decoration: none; transition: color .15s ease; }
+a:hover { color: var(--amber-300); }
+
+::selection { background: var(--amber-glow); color: #fff; }
+
+/* Daha estetik scrollbar */
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: var(--bg-900); }
+::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 8px; border: 3px solid var(--bg-900); }
+::-webkit-scrollbar-thumb:hover { background: #3a456b; }
+
+.text-muted { color: var(--text-muted) !important; }
+.lead { color: var(--text-muted); font-weight: 400; }
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+.site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: rgba(10, 14, 26, 0.72);
+    backdrop-filter: saturate(140%) blur(16px);
+    -webkit-backdrop-filter: saturate(140%) blur(16px);
+    border-bottom: 1px solid var(--border);
+}
+
+.site-nav .navbar-brand {
+    font-family: var(--ff-display);
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.03em;
+    color: var(--text) !important;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    white-space: nowrap;
+}
+
+.brand-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--amber-400), var(--amber-600));
+    box-shadow: 0 6px 18px -6px var(--amber-glow);
+    color: #2a1a00;
+    font-family: var(--ff-display);
+    font-weight: 800;
+    font-size: .95rem;
+    letter-spacing: -0.04em;
+}
+
+.site-nav .nav-link {
+    color: var(--text-muted) !important;
+    font-weight: 500;
+    font-size: .94rem;
+    padding: .45rem .85rem !important;
+    border-radius: 9px;
+    transition: color .15s ease, background .15s ease;
+}
+.site-nav .nav-link:hover { color: var(--text) !important; background: var(--surface); }
+.site-nav .nav-link.active { color: var(--amber-300) !important; }
+
+.navbar-toggler {
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(238,241,248,0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* ============================================================
+   BUTONLAR
+   ============================================================ */
+.btn {
+    font-family: var(--ff-body);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    padding: .58rem 1.15rem;
+    transition: transform .12s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease, color .2s ease;
+    border: 1px solid transparent;
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 .22rem var(--amber-glow);
+    outline: none;
+}
+
+.btn-lg { padding: .8rem 1.6rem; font-size: 1.02rem; border-radius: var(--radius); }
+.btn-sm { padding: .4rem .8rem; font-size: .82rem; }
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--amber-400), var(--amber-600));
+    color: #2a1a00;
+    border: none;
+    box-shadow: 0 10px 28px -12px var(--amber-glow);
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--amber-300), var(--amber-500));
+    color: #2a1a00;
+    box-shadow: 0 16px 38px -12px var(--amber-glow);
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    color: var(--amber-300);
+    border-color: var(--border-strong);
+    background: var(--surface);
+}
+.btn-outline-primary:hover {
+    color: #2a1a00;
+    background: var(--amber-400);
+    border-color: var(--amber-400);
+    transform: translateY(-1px);
+}
+
+.btn-link { color: var(--text-muted); text-decoration: none; }
+.btn-link:hover { color: var(--text); }
+
+/* nav içindeki çıkış butonu */
+.site-nav .btn-link.nav-link { padding: .45rem .85rem !important; }
+
+/* Buton grubu (dashboard sekmeleri) */
+.btn-group .btn-outline-primary { background: var(--surface); }
+
+/* ============================================================
+   KARTLAR
+   ============================================================ */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+.card.shadow-sm { box-shadow: var(--shadow-soft) !important; }
+
+.card-title { font-family: var(--ff-display); font-weight: 700; }
+.card-text { color: var(--text-muted); }
+.card-footer { background: transparent !important; border-top: 1px solid var(--border) !important; }
+
+/* Açık artırma kartı — hover'da yükselsin ve amber kenar parlasın */
+.auction-card {
+    position: relative;
+    transition: transform .22s cubic-bezier(.2,.7,.3,1), border-color .22s ease, box-shadow .22s ease;
+}
+.auction-card::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, transparent, transparent);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0; transition: opacity .25s ease;
+    pointer-events: none;
+}
+.auction-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-glow), 0 30px 60px -28px rgba(0,0,0,.8);
+}
+.auction-card:hover::before {
+    background: linear-gradient(135deg, var(--amber-400), var(--violet-500));
+    opacity: .6;
+}
+
+/* ============================================================
+   BADGE / DURUM ETİKETLERİ
+   ============================================================ */
+.badge {
+    font-family: var(--ff-body);
+    font-weight: 600;
+    letter-spacing: .01em;
+    padding: .4em .7em;
+    border-radius: 999px;
+    font-size: .72rem;
+}
+
+.badge.bg-success, .badge-live {
+    background: rgba(43, 217, 124, 0.14) !important;
+    color: var(--live) !important;
+    border: 1px solid rgba(43, 217, 124, 0.3);
+}
+.badge.bg-secondary {
+    background: rgba(154, 163, 189, 0.14) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-strong);
+}
+.badge.bg-dark {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-dim) !important;
+    border: 1px solid var(--border);
+}
+.badge.bg-danger {
+    background: rgba(255, 93, 108, 0.16) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(255, 93, 108, 0.3);
+}
+.badge.bg-info, .badge.bg-info.text-dark {
+    background: rgba(76, 197, 255, 0.14) !important;
+    color: var(--info) !important;
+    border: 1px solid rgba(76, 197, 255, 0.3);
+}
+.badge.bg-warning, .badge.bg-warning.text-dark {
+    background: rgba(245, 166, 35, 0.16) !important;
+    color: var(--amber-300) !important;
+    border: 1px solid rgba(245, 166, 35, 0.3);
+}
+.badge.bg-light.text-dark {
+    background: var(--surface-strong) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border);
+}
+
+/* Canlı yayın noktası */
+.live-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--live);
+    margin-right: 5px;
+    box-shadow: 0 0 0 0 var(--live-glow);
+    animation: pulse-live 1.8s infinite;
+}
+@keyframes pulse-live {
+    0% { box-shadow: 0 0 0 0 var(--live-glow); }
+    70% { box-shadow: 0 0 0 7px rgba(43, 217, 124, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(43, 217, 124, 0); }
+}
+
+/* ============================================================
+   FORMLAR
+   ============================================================ */
+.form-control, .form-select {
+    background: var(--bg-800);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: .6rem .85rem;
+}
+.form-control::placeholder { color: var(--text-dim); }
+.form-control:focus, .form-select:focus {
+    background: var(--bg-800);
+    border-color: var(--amber-500);
+    color: var(--text);
+}
+.input-group .form-control { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.input-group .btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+/* ============================================================
+   TABLO
+   ============================================================ */
+.table {
+    color: var(--text);
+    border-color: var(--border);
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text);
+}
+.table > :not(caption) > * > * {
+    background: transparent;
+    color: var(--text);
+    border-bottom-color: var(--border);
+    padding: .9rem 1rem;
+}
+.table thead th {
+    font-family: var(--ff-display);
+    font-size: .76rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-dim);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-strong);
+}
+.table.table-hover > tbody > tr:hover > * {
+    background: var(--surface) !important;
+    color: var(--text);
+}
+.table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+}
+.table-wrap .table { margin-bottom: 0; }
+
+/* ============================================================
+   LİSTE GRUBU (teklif geçmişi)
+   ============================================================ */
+.list-group { border-radius: var(--radius-sm); overflow: hidden; }
+.list-group-item {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+    padding: .7rem 1rem;
+}
+.list-group-item-success {
+    background: rgba(43, 217, 124, 0.1) !important;
+    color: var(--text) !important;
+    border-color: rgba(43, 217, 124, 0.2) !important;
+    animation: bid-flash .9s ease;
+}
+@keyframes bid-flash {
+    0% { background: rgba(245, 166, 35, 0.28) !important; }
+    100% { background: rgba(43, 217, 124, 0.1) !important; }
+}
+
+/* ============================================================
+   ALERT
+   ============================================================ */
+.alert {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+}
+.alert-info {
+    background: rgba(76, 197, 255, 0.08);
+    border-color: rgba(76, 197, 255, 0.22);
+    color: var(--text);
+}
+.alert-dark {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+/* ============================================================
+   BREADCRUMB
+   ============================================================ */
+.breadcrumb { font-size: .88rem; }
+.breadcrumb-item, .breadcrumb-item a { color: var(--text-muted); }
+.breadcrumb-item.active { color: var(--text); }
+.breadcrumb-item + .breadcrumb-item::before { color: var(--text-dim); }
+
+/* ============================================================
+   AÇIKLAMA LİSTESİ (detay)
+   ============================================================ */
+dl.row dt { color: var(--text-dim); font-weight: 500; }
+dl.row dd { color: var(--text); font-weight: 600; }
+
+/* ============================================================
+   HERO (Ana sayfa)
+   ============================================================ */
+.hero {
+    position: relative;
+    padding: clamp(3rem, 9vw, 7rem) 0 clamp(2rem, 6vw, 4rem);
+    text-align: center;
+    overflow: hidden;
+}
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--amber-300);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    padding: .4rem .9rem;
+    border-radius: 999px;
+    margin-bottom: 1.6rem;
+}
+.hero h1 {
+    font-weight: 800;
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    line-height: 1.04;
+    margin-bottom: 1.2rem;
+}
+.hero .grad-text {
+    background: linear-gradient(120deg, var(--amber-300), var(--amber-500) 40%, var(--violet-400));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.hero .lead {
+    font-size: clamp(1rem, 2.2vw, 1.22rem);
+    max-width: 620px;
+    margin: 0 auto 2rem;
+    color: var(--text-muted);
+}
+
+/* İstatistik şeridi */
+.stat-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(1.5rem, 6vw, 4rem);
+    margin-top: 3.5rem;
+    padding-top: 2.2rem;
+    border-top: 1px solid var(--border);
+}
+.stat-strip .stat-num {
+    font-family: var(--ff-display);
+    font-weight: 800;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    background: linear-gradient(120deg, var(--amber-300), var(--amber-500));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.stat-strip .stat-label {
+    font-size: .82rem; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: .05em;
+}
+
+/* ---------- Mekanik bölümü (numaralı lot satırları) ---------- */
+.mechanics { border-top: 1px solid var(--border); }
+.section-eyebrow {
+    font-family: var(--ff-mono);
+    font-size: .74rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+.mech-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(1rem, 4vw, 2.5rem);
+    align-items: baseline;
+    padding: 1.6rem 0;
+    border-top: 1px solid var(--border);
+    transition: padding-left .25s ease;
+}
+.mech-row:hover { padding-left: .5rem; }
+.mech-row:last-child { border-bottom: 1px solid var(--border); }
+.mech-no {
+    font-family: var(--ff-mono);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--amber-500);
+    min-width: 2.4ch;
+}
+.mech-body { display: grid; grid-template-columns: minmax(0, 22ch) 1fr; gap: clamp(.4rem, 3vw, 2.5rem); align-items: baseline; }
+@media (max-width: 640px) { .mech-body { grid-template-columns: 1fr; gap: .35rem; } }
+.mech-title {
+    font-family: var(--ff-display);
+    font-weight: 700;
+    font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+.mech-desc { color: var(--text-muted); font-size: .98rem; line-height: 1.6; }
+
+/* ---------- Kapanış CTA şeridi ---------- */
+.closing-band {
+    margin-top: 4.5rem;
+    padding: clamp(2.5rem, 6vw, 4rem);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-strong);
+    background:
+        radial-gradient(600px 200px at 0% 0%, rgba(245,166,35,.12), transparent 60%),
+        linear-gradient(160deg, var(--bg-700), var(--bg-800));
+    text-align: center;
+}
+.closing-band h2 {
+    font-weight: 800;
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    margin-bottom: .8rem;
+}
+
+/* ============================================================
+   DETAY — CANLI TEKLİF PANELİ
+   ============================================================ */
+.bid-panel {
+    background: linear-gradient(165deg, var(--bg-700), var(--bg-800));
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-glow);
+    position: relative;
+    overflow: hidden;
+}
+.bid-panel::after {
+    content: "";
+    position: absolute; inset: -1px;
+    background: radial-gradient(400px 120px at 50% -10%, var(--amber-glow), transparent 70%);
+    pointer-events: none;
+}
+.price-label {
+    font-size: .76rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-dim);
+}
+#currentPrice {
+    font-family: var(--ff-mono);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--amber-300) !important;
+    transition: color .3s ease, transform .3s ease;
+    text-shadow: 0 4px 30px var(--amber-glow);
+}
+#currentPrice.text-success {
+    color: var(--live) !important;
+    transform: scale(1.05);
+    text-shadow: 0 4px 30px var(--live-glow);
+}
+
+#countdown {
+    font-family: var(--ff-mono);
+    font-weight: 700;
+    font-size: .82rem;
+    letter-spacing: .02em;
+}
+
+.section-title {
+    font-family: var(--ff-display);
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   GÖRSELLER — kart kapağı, galeri, yükleme önizleme
+   ============================================================ */
+
+/* Liste kartı kapak görseli */
+.auction-cover {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: var(--bg-800);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+}
+.auction-cover img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform .4s cubic-bezier(.2,.7,.3,1);
+}
+.auction-card:hover .auction-cover img { transform: scale(1.06); }
+.auction-cover .cover-count {
+    position: absolute; bottom: .55rem; right: .55rem;
+    background: rgba(10, 14, 26, 0.78);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-size: .72rem; font-weight: 600;
+    padding: .2rem .55rem; border-radius: 999px;
+}
+.auction-cover.is-placeholder {
+    display: grid; place-items: center;
+    color: var(--text-dim);
+    font-family: var(--ff-display); font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; font-size: .8rem;
+    background:
+        repeating-linear-gradient(45deg, var(--bg-800), var(--bg-800) 12px, var(--bg-700) 12px, var(--bg-700) 24px);
+}
+
+/* Detay galerisi */
+.gallery { margin-bottom: 1.5rem; }
+.gallery-main {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-800);
+    border: 1px solid var(--border);
+}
+.gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-thumbs { display: flex; gap: .6rem; margin-top: .6rem; flex-wrap: wrap; }
+.gallery-thumbs button {
+    width: 76px; height: 56px;
+    padding: 0; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-800); cursor: pointer;
+    transition: border-color .15s ease, transform .15s ease;
+}
+.gallery-thumbs button img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-thumbs button:hover { transform: translateY(-2px); }
+.gallery-thumbs button.active { border-color: var(--amber-400); box-shadow: 0 0 0 1px var(--amber-400); }
+
+/* Yükleme önizleme thumbnail'ları */
+.img-thumb {
+    position: relative;
+    width: 96px; height: 96px;
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-800);
+}
+.img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.img-thumb.is-cover { border-color: var(--amber-400); }
+.img-thumb .cover-tag {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--amber-400); color: #2a1a00;
+    font-size: .64rem; font-weight: 700; text-align: center;
+    padding: .12rem 0; letter-spacing: .03em;
+}
+
+/* ============================================================
+   KAZANAN / İLETİŞİM KARTI
+   ============================================================ */
+.contact-card {
+    border: 1px solid rgba(245, 166, 35, 0.3);
+    background:
+        radial-gradient(400px 140px at 100% 0%, rgba(245,166,35,.1), transparent 60%),
+        var(--surface-strong);
+    border-radius: var(--radius);
+    padding: 1.3rem 1.4rem;
+    margin-top: 1.2rem;
+}
+.contact-card .contact-head {
+    font-family: var(--ff-display); font-weight: 700;
+    font-size: 1.02rem; margin-bottom: .9rem;
+    display: flex; align-items: center; gap: .5rem;
+}
+.contact-row { display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; }
+.contact-row + .contact-row { border-top: 1px solid var(--border); }
+.contact-row .k { color: var(--text-dim); font-size: .85rem; }
+.contact-row .v { color: var(--text); font-weight: 600; word-break: break-all; }
+.contact-row .v a { color: var(--amber-300); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.site-footer {
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: .88rem;
+    padding: 1.6rem 0;
+    margin-top: 4rem;
+}
+.site-footer a { color: var(--text-muted); }
+.site-footer a:hover { color: var(--amber-300); }
+
+/* ============================================================
+   YARDIMCI
+   ============================================================ */
+.text-primary { color: var(--amber-300) !important; }
+.text-success { color: var(--live) !important; }
+.fw-bold { font-weight: 700; }
+.page-head { margin-bottom: 1.8rem; }
+.page-head h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; }
+
+main { min-height: 60vh; }
+
+/* Bootstrap'in beyaz odak halkasını ezmek için genel kapatma */
+*:focus-visible { outline: none; }
