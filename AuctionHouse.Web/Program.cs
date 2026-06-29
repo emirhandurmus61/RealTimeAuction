@@ -1,4 +1,5 @@
 using AuctionHouse.Core.Entities;
+using AuctionHouse.Hubs;
 using AuctionHouse.Infrastructure;
 using AuctionHouse.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
@@ -16,6 +17,9 @@ builder.Services
     .AddEntityFrameworkStores<AuctionDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+// SignalR + presence tracker + IAuctionNotifier (canlı yayın).
+builder.Services.AddAuctionRealtime();
 
 var app = builder.Build();
 
@@ -42,6 +46,9 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+
+// SignalR hub endpoint'i.
+app.MapHub<AuctionHub>("/hubs/auction");
 
 // Veritabanını migrate et + seed (roller, örnek satıcı, açık artırmalar).
 await DbSeeder.SeedAsync(app.Services);

@@ -1,6 +1,10 @@
 @model AuctionHouse.Core.Entities.Auction
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
 @{
     ViewData["Title"] = Model.Title;
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var isActive = Model.Status == AuctionHouse.Core.Entities.AuctionStatus.Active;
 }
 
 <nav aria-label="breadcrumb">
@@ -37,32 +41,178 @@
     <div class="col-lg-5">
         <div class="card shadow-sm">
             <div class="card-body text-center">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge bg-info text-dark">
+                        👁 <span id="viewerCount">0</span> izliyor
+                    </span>
+                    <span id="countdown" class="badge bg-warning text-dark">--:--</span>
+                </div>
+
                 <div class="text-muted">Güncel Teklif</div>
-                <div class="display-5 fw-bold text-primary mb-3">
+                <div id="currentPrice" class="display-5 fw-bold text-primary mb-3"
+                     data-value="@Model.CurrentPrice">
                     @Model.CurrentPrice.ToString("N2") ₺
                 </div>
-                <div class="alert alert-secondary mb-0">
-                    Teklif verme — Hafta 2'de (Web API + concurrency) eklenecek.
-                </div>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div id="bidArea">
+                        <div class="input-group mb-2">
+                            <input type="number" step="0.01" id="bidAmount" class="form-control"
+                                   placeholder="Teklif tutarı" />
+                            <button id="bidButton" class="btn btn-primary">Teklif Ver</button>
+                        </div>
+                        <div id="bidFeedback" class="small"></div>
+                    </div>
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Login"
+                       asp-route-returnUrl="@Url.Action("Details", new { id = Model.Id })"
+                       class="btn btn-outline-primary w-100">Teklif vermek için giriş yap</a>
+                }
             </div>
         </div>
 
-        <h5 class="mt-4">Teklif Geçmişi (@Model.Bids.Count)</h5>
-        @if (!Model.Bids.Any())
-        {
-            <p class="text-muted">Henüz teklif yok.</p>
-        }
-        else
-        {
-            <ul class="list-group">
-                @foreach (var bid in Model.Bids)
-                {
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>@(bid.Bidder?.DisplayName ?? bid.Bidder?.Email ?? "Anonim")</span>
-                        <strong>@bid.Amount.ToString("N2") ₺</strong>
-                    </li>
-                }
-            </ul>
-        }
+        <h5 class="mt-4">Teklif Geçmişi (<span id="bidCount">@Model.Bids.Count</span>)</h5>
+        <ul id="bidList" class="list-group">
+            @foreach (var bid in Model.Bids)
+            {
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>@(bid.Bidder?.DisplayName ?? bid.Bidder?.Email ?? "Anonim")</span>
+                    <strong>@bid.Amount.ToString("N2") ₺</strong>
+                </li>
+            }
+        </ul>
+        <p id="noBids" class="text-muted @(Model.Bids.Any() ? "d-none" : "")">Henüz teklif yok.</p>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script>
+        const auctionId = @Model.Id;
+        // EndTime sunucuda UTC tutulur; ISO string'e Z ekleyerek UTC olarak parse et.
+        const endTimeUtc = new Date("@Model.EndTime.ToString("yyyy-MM-ddTHH:mm:ss")Z");
+        const isActive = @(isActive ? "true" : "false");
+        const antiforgeryToken = "@token";
+
+        function parseUtc(s) {
+            return new Date(s.endsWith("Z") ? s : s + "Z");
+        }
+
+        // --- Server-authoritative geri sayım ---
+        // Bitiş zamanı sunucudan gelir; istemci yalnızca sayar.
+        const countdownEl = document.getElementById("countdown");
+        let currentEndTime = endTimeUtc;
+
+        function renderCountdown() {
+            const diff = currentEndTime - new Date();
+            if (diff <= 0) {
+                countdownEl.textContent = "Bitti";
+                countdownEl.className = "badge bg-dark";
+                return;
+            }
+            const totalSec = Math.floor(diff / 1000);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            const pad = n => String(n).padStart(2, "0");
+            countdownEl.textContent = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+            // Son 10 sn vurgusu
+            countdownEl.className = totalSec <= 10 ? "badge bg-danger" : "badge bg-warning text-dark";
+        }
+        renderCountdown();
+        setInterval(renderCountdown, 1000);
+
+        function fmt(n) {
+            return Number(n).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ₺";
+        }
+
+        // --- SignalR canlı bağlantı ---
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/auction")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ViewerCountChanged", e => {
+            if (e.auctionId === auctionId)
+                document.getElementById("viewerCount").textContent = e.viewerCount;
+        });
+
+        connection.on("BidPlaced", e => {
+            if (e.auctionId !== auctionId) return;
+            // Canlı fiyat
+            const priceEl = document.getElementById("currentPrice");
+            priceEl.textContent = fmt(e.newPrice);
+            priceEl.dataset.value = e.newPrice;
+            priceEl.classList.add("text-success");
+            setTimeout(() => priceEl.classList.remove("text-success"), 800);
+
+            // Sunucu bitiş zamanını da gönderir -> sayaç senkronu (anti-sniping dahil).
+            if (e.endTime) currentEndTime = parseUtc(e.endTime);
+
+            // Teklif geçmişine ekle
+            const list = document.getElementById("bidList");
+            const li = document.createElement("li");
+            li.className = "list-group-item d-flex justify-content-between list-group-item-success";
+            li.innerHTML = `<span>${e.bidderName ?? "Anonim"}</span><strong>${fmt(e.newPrice)}</strong>`;
+            list.prepend(li);
+            document.getElementById("noBids").classList.add("d-none");
+            const cnt = document.getElementById("bidCount");
+            cnt.textContent = parseInt(cnt.textContent || "0") + 1;
+        });
+
+        connection.on("AuctionExtended", e => {
+            if (e.auctionId !== auctionId) return;
+            currentEndTime = parseUtc(e.newEndTime);
+            countdownEl.classList.add("bg-danger");
+        });
+
+        connection.on("AuctionEnded", e => {
+            if (e.auctionId !== auctionId) return;
+            countdownEl.textContent = "Bitti";
+            countdownEl.className = "badge bg-dark";
+            const area = document.getElementById("bidArea");
+            if (area) area.innerHTML = `<div class="alert alert-dark mb-0">Açık artırma sona erdi. Kazanan: ${e.winnerName ?? "—"}</div>`;
+        });
+
+        connection.on("Outbid", e => {
+            if (e.auctionId !== auctionId) return;
+            const fb = document.getElementById("bidFeedback");
+            if (fb) { fb.className = "small text-danger"; fb.textContent = "Teklifiniz geçildi! Yeni fiyat: " + fmt(e.newPrice); }
+        });
+
+        connection.start()
+            .then(() => connection.invoke("JoinAuction", auctionId))
+            .catch(err => console.error("SignalR bağlantı hatası:", err));
+
+        // --- Teklif gönderme (AJAX) ---
+        const bidButton = document.getElementById("bidButton");
+        if (bidButton) {
+            bidButton.addEventListener("click", async () => {
+                const amount = parseFloat(document.getElementById("bidAmount").value);
+                const fb = document.getElementById("bidFeedback");
+                if (isNaN(amount)) { fb.className = "small text-danger"; fb.textContent = "Geçerli bir tutar girin."; return; }
+
+                bidButton.disabled = true;
+                try {
+                    const res = await fetch("@Url.Action("PlaceBid")", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded", "RequestVerificationToken": antiforgeryToken },
+                        body: new URLSearchParams({ id: auctionId, amount: amount })
+                    });
+                    const data = await res.json();
+                    fb.className = data.success ? "small text-success" : "small text-danger";
+                    fb.textContent = data.message;
+                    if (data.success) document.getElementById("bidAmount").value = "";
+                } catch (err) {
+                    fb.className = "small text-danger";
+                    fb.textContent = "Bir hata oluştu, tekrar deneyin.";
+                } finally {
+                    bidButton.disabled = false;
+                }
+            });
+        }
+    </script>
+}

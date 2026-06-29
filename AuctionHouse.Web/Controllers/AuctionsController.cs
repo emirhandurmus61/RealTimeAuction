@@ -1,5 +1,8 @@
-using AuctionHouse.Core.Entities;
+using System.Security.Claims;
+using AuctionHouse.Core.DTOs;
+using AuctionHouse.Core.Interfaces;
 using AuctionHouse.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,10 +11,12 @@ namespace AuctionHouse.Web.Controllers;
 public class AuctionsController : Controller
 {
     private readonly AuctionDbContext _db;
+    private readonly IBidService _bids;
 
-    public AuctionsController(AuctionDbContext db)
+    public AuctionsController(AuctionDbContext db, IBidService bids)
     {
         _db = db;
+        _bids = bids;
     }
 
     // GET: /Auctions
@@ -42,5 +47,17 @@ public class AuctionsController : Controller
             return NotFound();
 
         return View(auction);
+    }
+
+    // POST: /Auctions/PlaceBid  (AJAX, giriş gerekli)
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PlaceBid(int id, decimal amount, CancellationToken ct)
+    {
+        var bidderId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await _bids.PlaceBidAsync(id, bidderId, amount, ct);
+
+        return Json(new { success = result.IsSuccess, message = result.Message, newPrice = result.NewCurrentPrice });
     }
 }

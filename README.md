@@ -70,11 +70,27 @@ Teklif iş kuralları: teklif `güncel fiyat + min artış` değerinden düşük
 açık artırma aktif/süresi geçmemiş olmalı, satıcı kendi artırmasına teklif veremez.
 Eşzamanlı teklifler `RowVersion` (optimistic concurrency) + sınırlı retry ile çözülür.
 
+### Canlı (SignalR) demo
+
+`AuctionHouse.Web`'i çalıştırıp bir açık artırma detay sayfasını **iki ayrı tarayıcıda** aç.
+Birinde teklif verince diğerinde anında güncellenenler:
+
+- **Güncel fiyat** ve **teklif geçmişi** (gruba `BidPlaced` yayını)
+- **İzleyici sayısı** ("👁 N izliyor" — `OnConnectedAsync`/`OnDisconnectedAsync` presence)
+- **Geri sayım** sunucudan gelen `EndTime`'a göre (server-authoritative; istemci saatine güvenmez)
+- **Anti-sniping:** son 10 sn'de teklif gelirse bitiş +30 sn uzar, sayaç senkronlanır
+- **"Teklifin geçildi"** uyarısı — önceki en yüksek teklif sahibine targeted mesaj
+
+Hub endpoint'i: `/hubs/auction` · JS client: `wwwroot/lib/signalr/signalr.min.js`
+
 ### Testler
 
 ```bash
 dotnet test
 ```
+
+8 test: teklif iş kuralları, optimistic concurrency çözümü, anti-sniping uzatması,
+outbid bildirimi (gerçek SQLite in-memory ile).
 
 ## Proje Durumu
 
@@ -83,5 +99,5 @@ dotnet test
 - [x] **Hafta 0** — Solution + 6 proje iskeleti, referans grafiği
 - [x] **Hafta 1** — Domain + EF Core + Identity (açık artırma listesi/detay DB'den, kayıt/giriş)
 - [x] **Hafta 2** — Web API (REST + Swagger + bearer auth), teklif iş kuralları, optimistic concurrency + retry, xUnit testleri
-- [ ] **Hafta 3** — SignalR (canlı teklif/sayaç/presence)
+- [x] **Hafta 3** — SignalR ⭐ (canlı teklif yayını, server-authoritative geri sayım, anti-sniping, presence, outbid bildirimi)
 - [ ] **Hafta 4** — Background jobs + testler + deploy

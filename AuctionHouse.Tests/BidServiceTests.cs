@@ -1,5 +1,6 @@
 using AuctionHouse.Core.DTOs;
 using AuctionHouse.Core.Entities;
+using AuctionHouse.Core.Interfaces;
 using AuctionHouse.Infrastructure.Data;
 using AuctionHouse.Infrastructure.Services;
 using Microsoft.Data.Sqlite;
@@ -7,6 +8,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AuctionHouse.Tests;
+
+/// <summary>Gönderilen canlı bildirimleri yakalayan test sahtesi.</summary>
+internal sealed class FakeNotifier : IAuctionNotifier
+{
+    public List<BidPlacedEvent> BidPlaced { get; } = new();
+    public List<AuctionExtendedEvent> Extended { get; } = new();
+    public List<AuctionEndedEvent> Ended { get; } = new();
+    public List<(string userId, int auctionId, decimal price)> Outbids { get; } = new();
+
+    public Task BidPlacedAsync(BidPlacedEvent e, CancellationToken ct = default)
+    { BidPlaced.Add(e); return Task.CompletedTask; }
+
+    public Task AuctionExtendedAsync(AuctionExtendedEvent e, CancellationToken ct = default)
+    { Extended.Add(e); return Task.CompletedTask; }
+
+    public Task AuctionEndedAsync(AuctionEndedEvent e, CancellationToken ct = default)
+    { Ended.Add(e); return Task.CompletedTask; }
+
+    public Task OutbidAsync(string userId, int auctionId, decimal newPrice, CancellationToken ct = default)
+    { Outbids.Add((userId, auctionId, newPrice)); return Task.CompletedTask; }
+}
 
 /// <summary>
 /// BidService iş kuralları ve optimistic concurrency testleri.
@@ -44,8 +66,10 @@ public class BidServiceTests : IDisposable
 
     private AuctionDbContext NewContext() => new(_options);
 
+    private readonly FakeNotifier _notifier = new();
+
     private BidService NewService(AuctionDbContext ctx)
-        => new(ctx, NullLogger<BidService>.Instance);
+        => new(ctx, _notifier, NullLogger<BidService>.Instance);
 
     private async Task<Auction> SeedAuctionAsync(
         decimal startPrice = 100m, decimal minIncrement = 10m,
@@ -159,6 +183,53 @@ public class BidServiceTests : IDisposable
         using var verify = NewContext();
         Assert.Equal(110m, (await verify.Auctions.FindAsync(auction.Id))!.CurrentPrice);
         Assert.Equal(1, await verify.Bids.CountAsync());
+    }
+
+    [Fact]
+    public async Task PlaceBid_WithinSnipeWindow_ExtendsEndTime_AndNotifies()
+    {
+        // Bitişe 5 sn kala (snipe penceresi 10 sn) -> bitiş uzatılmalı.
+        var auction = await SeedAuctionAsync(startPrice: 100m, minIncrement: 10m,
+            startOffsetMin: -10, endOffsetMin: 0);
+        // endOffsetMin 0 tam "şimdi"yi verir; birkaç saniyelik pencereyi garanti
+        // etmek için bitişi elle 5 sn sonraya çek.
+        using (var setup = NewContext())
+        {
+            var a = await setup.Auctions.FindAsync(auction.Id);
+            a!.EndTime = DateTime.UtcNow.AddSeconds(5);
+            await setup.SaveChangesAsync();
+        }
+
+        using var ctx = NewContext();
+        var before = (await ctx.Auctions.FindAsync(auction.Id))!.EndTime;
+        var result = await NewService(ctx).PlaceBidAsync(auction.Id, "bidder-A", 110m);
+
+        Assert.True(result.IsSuccess);
+
+        using var verify = NewContext();
+        var after = (await verify.Auctions.FindAsync(auction.Id))!.EndTime;
+        Assert.True(after > before, "Bitiş zamanı uzatılmalıydı.");
+        Assert.True(after > DateTime.UtcNow.AddSeconds(20), "Uzatma ~30 sn olmalı.");
+
+        // Hem teklif hem uzatma bildirimi gönderildi.
+        Assert.Single(_notifier.BidPlaced);
+        Assert.Single(_notifier.Extended);
+    }
+
+    [Fact]
+    public async Task PlaceBid_OutbidsPreviousLeader_NotifiesPreviousLeader()
+    {
+        var auction = await SeedAuctionAsync(startPrice: 100m, minIncrement: 10m);
+
+        using (var ctx1 = NewContext())
+            await NewService(ctx1).PlaceBidAsync(auction.Id, "bidder-A", 110m);
+
+        using (var ctx2 = NewContext())
+            await NewService(ctx2).PlaceBidAsync(auction.Id, "bidder-B", 120m);
+
+        var outbid = Assert.Single(_notifier.Outbids);
+        Assert.Equal("bidder-A", outbid.userId);
+        Assert.Equal(120m, outbid.price);
     }
 
     public void Dispose() => _connection.Dispose();

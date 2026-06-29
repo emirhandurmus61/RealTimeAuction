@@ -15,12 +15,18 @@ public class BidService : IBidService
 {
     private const int MaxRetries = 3;
 
+    // Anti-sniping: bitişe bu süreden az kala gelen teklif, bitişi uzatır.
+    private static readonly TimeSpan SnipeWindow = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan SnipeExtension = TimeSpan.FromSeconds(30);
+
     private readonly AuctionDbContext _db;
+    private readonly IAuctionNotifier _notifier;
     private readonly ILogger<BidService> _logger;
 
-    public BidService(AuctionDbContext db, ILogger<BidService> logger)
+    public BidService(AuctionDbContext db, IAuctionNotifier notifier, ILogger<BidService> logger)
     {
         _db = db;
+        _notifier = notifier;
         _logger = logger;
     }
 
@@ -36,8 +42,20 @@ public class BidService : IBidService
                 return validation;
 
             // auction null değil (Validate kontrol etti).
-            auction!.CurrentPrice = amount;
+            var previousLeaderId = auction!.WinnerId; // outbid bildirimi için (güncellemeden önce).
+
+            auction.CurrentPrice = amount;
             auction.WinnerId = bidderId; // şimdilik en yüksek teklif sahibi
+
+            // Anti-sniping: son saniyelerde gelen teklif bitişi uzatır.
+            var now = DateTime.UtcNow;
+            var extended = false;
+            if (auction.EndTime - now <= SnipeWindow)
+            {
+                auction.EndTime = now + SnipeExtension;
+                extended = true;
+            }
+
             // Concurrency token'ı elle ilerlet (SQLite otomatik üretmez).
             auction.RowVersion = Guid.NewGuid().ToByteArray();
 
@@ -46,13 +64,15 @@ public class BidService : IBidService
                 AuctionId = auctionId,
                 BidderId = bidderId,
                 Amount = amount,
-                Timestamp = DateTime.UtcNow
+                Timestamp = now
             };
             _db.Bids.Add(bid);
 
             try
             {
                 await _db.SaveChangesAsync(ct);
+
+                await NotifyAsync(auction, bid, bidderId, previousLeaderId, extended, ct);
 
                 var dto = new BidDto(bid.Id, bid.Amount, bid.Timestamp, bidderId, null);
                 return BidResult.Success(dto, amount);
@@ -97,6 +117,40 @@ public class BidService : IBidService
                 $"Teklif en az {minimumValid:N2} olmalı (güncel {auction.CurrentPrice:N2} + min artış {auction.MinIncrement:N2}).");
 
         return null;
+    }
+
+    /// <summary>
+    /// Teklif kabul edildikten sonra canlı bildirimleri gönderir. Bildirim
+    /// hatası teklifin başarısını etkilemez (yalnızca loglanır).
+    /// </summary>
+    private async Task NotifyAsync(
+        Auction auction, Bid bid, string bidderId, string? previousLeaderId,
+        bool extended, CancellationToken ct)
+    {
+        try
+        {
+            // İzleyicilere okunabilir bir ad göster (DisplayName > Email > "Anonim").
+            var bidderName = await _db.Users
+                .Where(u => u.Id == bidderId)
+                .Select(u => u.DisplayName ?? u.Email)
+                .FirstOrDefaultAsync(ct) ?? "Anonim";
+
+            await _notifier.BidPlacedAsync(new BidPlacedEvent(
+                auction.Id, auction.CurrentPrice, bidderName, bid.Timestamp, auction.EndTime), ct);
+
+            if (extended)
+                await _notifier.AuctionExtendedAsync(
+                    new AuctionExtendedEvent(auction.Id, auction.EndTime), ct);
+
+            // Önceki lider varsa ve farklı bir kullanıcıysa "teklifin geçildi" bildir.
+            if (!string.IsNullOrEmpty(previousLeaderId) && previousLeaderId != bidderId)
+                await _notifier.OutbidAsync(previousLeaderId, auction.Id, auction.CurrentPrice, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Teklif sonrası canlı bildirim gönderilemedi (auction {AuctionId}).", auction.Id);
+        }
     }
 
     private void Detach(object entity)
