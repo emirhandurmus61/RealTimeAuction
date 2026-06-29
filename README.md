@@ -38,6 +38,15 @@ RealTimeAuction.sln
 ```bash
 dotnet build
 dotnet run --project AuctionHouse.Web
+# http://localhost:5017
+```
+
+İlk çalıştırmada veritabanı otomatik oluşturulur ve örnek veriyle doldurulur
+(roller, kategoriler, 3 aktif açık artırma). Hazır örnek satıcı hesabı:
+
+```
+E-posta: seller@auction.local
+Parola:  Seller123!
 ```
 
 ## Proje Durumu
@@ -45,7 +54,7 @@ dotnet run --project AuctionHouse.Web
 🚧 Geliştirme aşamasında. Yol haritası için bkz. `realtime-auction-roadmap.md`.
 
 - [x] **Hafta 0** — Solution + 6 proje iskeleti, referans grafiği
-- [ ] **Hafta 1** — Domain + EF Core + Identity
+- [x] **Hafta 1** — Domain + EF Core + Identity (açık artırma listesi/detay DB'den, kayıt/giriş)
 - [ ] **Hafta 2** — Web API + teklif mantığı + concurrency
 - [ ] **Hafta 3** — SignalR (canlı teklif/sayaç/presence)
 - [ ] **Hafta 4** — Background jobs + testler + deploy

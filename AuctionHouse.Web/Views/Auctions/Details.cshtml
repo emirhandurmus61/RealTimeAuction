@@ -1,0 +1,68 @@
+@model AuctionHouse.Core.Entities.Auction
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Açık Artırmalar</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-7">
+        <h1>@Model.Title</h1>
+        @if (Model.Category is not null)
+        {
+            <span class="badge bg-light text-dark mb-3">@Model.Category.Name</span>
+        }
+        <p class="lead">@Model.Description</p>
+
+        <dl class="row mt-4">
+            <dt class="col-sm-4">Açılış Fiyatı</dt>
+            <dd class="col-sm-8">@Model.StartPrice.ToString("N2") ₺</dd>
+
+            <dt class="col-sm-4">Min. Artış</dt>
+            <dd class="col-sm-8">@Model.MinIncrement.ToString("N2") ₺</dd>
+
+            <dt class="col-sm-4">Satıcı</dt>
+            <dd class="col-sm-8">@(Model.Seller?.DisplayName ?? Model.Seller?.Email ?? "—")</dd>
+
+            <dt class="col-sm-4">Bitiş</dt>
+            <dd class="col-sm-8">@Model.EndTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+        </dl>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-muted">Güncel Teklif</div>
+                <div class="display-5 fw-bold text-primary mb-3">
+                    @Model.CurrentPrice.ToString("N2") ₺
+                </div>
+                <div class="alert alert-secondary mb-0">
+                    Teklif verme — Hafta 2'de (Web API + concurrency) eklenecek.
+                </div>
+            </div>
+        </div>
+
+        <h5 class="mt-4">Teklif Geçmişi (@Model.Bids.Count)</h5>
+        @if (!Model.Bids.Any())
+        {
+            <p class="text-muted">Henüz teklif yok.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var bid in Model.Bids)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>@(bid.Bidder?.DisplayName ?? bid.Bidder?.Email ?? "Anonim")</span>
+                        <strong>@bid.Amount.ToString("N2") ₺</strong>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>

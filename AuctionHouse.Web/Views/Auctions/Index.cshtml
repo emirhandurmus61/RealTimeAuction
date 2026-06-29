@@ -1,0 +1,55 @@
+@model IEnumerable<AuctionHouse.Core.Entities.Auction>
+@{
+    ViewData["Title"] = "Açık Artırmalar";
+
+    static (string text, string css) StatusBadge(AuctionHouse.Core.Entities.AuctionStatus s) => s switch
+    {
+        AuctionHouse.Core.Entities.AuctionStatus.Active => ("Aktif", "bg-success"),
+        AuctionHouse.Core.Entities.AuctionStatus.Scheduled => ("Planlandı", "bg-secondary"),
+        AuctionHouse.Core.Entities.AuctionStatus.Ended => ("Bitti", "bg-dark"),
+        AuctionHouse.Core.Entities.AuctionStatus.Cancelled => ("İptal", "bg-danger"),
+        _ => ("?", "bg-secondary")
+    };
+}
+
+<h1 class="mb-4">Açık Artırmalar</h1>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Henüz açık artırma yok.</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @foreach (var a in Model)
+        {
+            var badge = StatusBadge(a.Status);
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">@a.Title</h5>
+                            <span class="badge @badge.css">@badge.text</span>
+                        </div>
+                        @if (a.Category is not null)
+                        {
+                            <span class="badge bg-light text-dark mb-2">@a.Category.Name</span>
+                        }
+                        <p class="card-text text-muted small">@a.Description</p>
+                        <div class="fs-5 fw-bold text-primary">
+                            @a.CurrentPrice.ToString("N2") ₺
+                        </div>
+                        <div class="small text-muted">
+                            Bitiş: @a.EndTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        <a asp-action="Details" asp-route-id="@a.Id" class="btn btn-outline-primary btn-sm w-100">
+                            Detay & Teklif
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
