@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuctionHouse.Core", "AuctionHouse.Core\AuctionHouse.Core.csproj", "{A346CC64-F834-48F1-8E3C-A602E3AC8E2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuctionHouse.Infrastructure", "AuctionHouse.Infrastructure\AuctionHouse.Infrastructure.csproj", "{FFFEEBC8-E075-4F37-85EE-541017299286}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuctionHouse.Hubs", "AuctionHouse.Hubs\AuctionHouse.Hubs.csproj", "{934D8D7D-40EE-41F3-982E-F697957AD6A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuctionHouse.Web", "AuctionHouse.Web\AuctionHouse.Web.csproj", "{A058E7C3-311A-4C1E-A702-8966BB4C254F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuctionHouse.Api", "AuctionHouse.Api\AuctionHouse.Api.csproj", "{F57F2F7F-9E02-4922-996A-3BE4535BCECD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuctionHouse.Tests", "AuctionHouse.Tests\AuctionHouse.Tests.csproj", "{6587389A-2BFD-48F0-9219-DE02770D6B0D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A346CC64-F834-48F1-8E3C-A602E3AC8E2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A346CC64-F834-48F1-8E3C-A602E3AC8E2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A346CC64-F834-48F1-8E3C-A602E3AC8E2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A346CC64-F834-48F1-8E3C-A602E3AC8E2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFFEEBC8-E075-4F37-85EE-541017299286}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFFEEBC8-E075-4F37-85EE-541017299286}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFFEEBC8-E075-4F37-85EE-541017299286}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFFEEBC8-E075-4F37-85EE-541017299286}.Release|Any CPU.Build.0 = Release|Any CPU
+		{934D8D7D-40EE-41F3-982E-F697957AD6A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{934D8D7D-40EE-41F3-982E-F697957AD6A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{934D8D7D-40EE-41F3-982E-F697957AD6A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{934D8D7D-40EE-41F3-982E-F697957AD6A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A058E7C3-311A-4C1E-A702-8966BB4C254F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A058E7C3-311A-4C1E-A702-8966BB4C254F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A058E7C3-311A-4C1E-A702-8966BB4C254F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A058E7C3-311A-4C1E-A702-8966BB4C254F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F57F2F7F-9E02-4922-996A-3BE4535BCECD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F57F2F7F-9E02-4922-996A-3BE4535BCECD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F57F2F7F-9E02-4922-996A-3BE4535BCECD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F57F2F7F-9E02-4922-996A-3BE4535BCECD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6587389A-2BFD-48F0-9219-DE02770D6B0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6587389A-2BFD-48F0-9219-DE02770D6B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6587389A-2BFD-48F0-9219-DE02770D6B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6587389A-2BFD-48F0-9219-DE02770D6B0D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
